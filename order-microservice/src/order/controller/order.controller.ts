@@ -2,13 +2,13 @@ import { Controller, Get, Post, Delete, Body, Param, HttpStatus, HttpCode } from
 import { OrderService } from '../service/order.service';
 import { CreateOrderDto } from '../commons/dto/create-order.dto';
 import { MessagePattern, Payload } from '@nestjs/microservices';
-import { KAFKA_CONFIG } from '../../config/kafka.config';
+import { KAFKA_CONFIG } from '../../kafka/kafka.config';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiParam } from '@nestjs/swagger';
 import { Order } from '../commons/sechma/order.schema';
 
 @ApiTags('orders')
 @Controller('orders')
-export class OrdersController {
+export class OrderController {
   constructor(private readonly orderService: OrderService) {}
 
   @Post()

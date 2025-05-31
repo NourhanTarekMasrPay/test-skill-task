@@ -5,7 +5,7 @@ import { Order } from '../commons/sechma/order.schema';
 import { ClientKafka } from '@nestjs/microservices';
 
 import { CreateOrderDto } from '../commons/dto/create-order.dto';
-import { KAFKA_CONFIG } from '../../config/kafka.config';
+import { KAFKA_CONFIG } from 'src/kafka/kafka.config';
 
 @Injectable()
 export class OrderService {

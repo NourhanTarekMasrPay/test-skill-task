@@ -7,6 +7,7 @@ import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
 import { AuthService } from './auth/service/auth.service';
 import { KeycloakConnectModule, PolicyEnforcementMode, TokenValidation } from 'nest-keycloak-connect';
+import { KafkaModule } from './kafka/kafka.module';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { KeycloakConnectModule, PolicyEnforcementMode, TokenValidation } from 'n
     }),
     UserModule,
     AuthModule,
+    KafkaModule
   ],
   controllers: [AppController],
   providers: [AppService, AuthService],
