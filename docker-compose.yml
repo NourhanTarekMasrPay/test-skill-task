@@ -1,0 +1,113 @@
+services:
+  # Zookeeper service (required by Kafka)
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.0.1
+    container_name: zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+  # Kafka service
+  kafka:
+    image: confluentinc/cp-kafka:7.0.1
+    container_name: kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+
+  # MongoDB service
+  mongodb:
+    image: mongo:5.0
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: password
+
+  # Keycloak database
+  keycloak-db:
+    image: postgres:13
+    container_name: keycloak-db
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: password
+    volumes:
+      - keycloak_db_data:/var/lib/postgresql/data
+
+  # Keycloak service
+  keycloak:
+    image: quay.io/keycloak/keycloak:18.0.0
+    container_name: keycloak
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://keycloak-db:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: password
+    ports:
+      - "8080:8080"
+    command: ["start-dev"]
+    depends_on:
+      - keycloak-db
+
+
+  # Auth Microservice
+  auth-microservice:
+    build:
+      context: ./auth-microservice
+      dockerfile: Dockerfile
+    container_name: auth-microservice
+    ports:
+      - "8081:3000"
+    environment:
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      MONGO_URI: mongodb://root:password@mongodb:27017/your_auth_db?authSource=admin
+      KEYCLOAK_SERVER_URL: http://keycloak:8080
+      KEYCLOAK_REALM: myrealm
+      KEYCLOAK_CLIENT_ID: auth-microservice
+      KEYCLOAK_CLIENT_SECRET: 1JGbdWwowlxk2KwBKsB4UDL9Rp6LNvNQ
+    depends_on:
+      - kafka
+      - mongodb
+      - keycloak
+
+  # Order Microservice
+  order-microservice:
+    build:
+      context: ./order-microservice
+      dockerfile: Dockerfile
+    container_name: order-microservice
+    ports:
+      - "8082:5000"
+    environment:
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SPRING_DATA_MONGODB_URI: mongodb://root:example@mongodb:27017/order_db?authSource=admin
+      KEYCLOAK_SERVER_URL: http://keycloak:8082
+      KEYCLOAK_REALM: myrealm
+      KEYCLOAK_CLIENT_ID: order-microservice
+      KEYCLOAK_CLIENT_SECRET: A34hWDnQyWg2XUStIvTPUergisVfojX2
+    depends_on:
+      - kafka
+      - mongodb
+      - keycloak
+
+volumes:
+  mongodb_data:
+  keycloak_db_data:
