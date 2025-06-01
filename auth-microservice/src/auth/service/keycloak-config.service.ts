@@ -8,7 +8,7 @@ export class KeycloakConfigService implements KeycloakConnectOptionsFactory {
 
   createKeycloakConnectOptions(): KeycloakConnectOptions {
     return {
-      authServerUrl: this.configService.get<string>('KEYCLOAK_AUTH_SERVER_URL'),
+      authServerUrl: this.configService.get<string>('KEYCLOAK_AUTH_URL'),
       realm: this.configService.get<string>('KEYCLOAK_REALM'),
       clientId: this.configService.get<string>('KEYCLOAK_CLIENT_ID'),
       secret: this.configService.get<string>('KEYCLOAK_CLIENT_SECRET') || "mysecret",

@@ -14,8 +14,6 @@ export class OrderService {
     private readonly kafkaClient: ClientKafka,
   ) {}
 
-  async onModuleInit() {}
-
   async create(createOrderDto: CreateOrderDto): Promise<Order> {
     const createdOrder = new this.orderModel(createOrderDto);
     const order = await createdOrder.save();

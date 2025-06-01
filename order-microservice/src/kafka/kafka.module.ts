@@ -3,7 +3,10 @@ import { KafkaProducerService } from './kafka-producer.service'; // Adjust the i
 import { KafkaConsumerService } from './kafka-consumer.service';
 
 @Module({
+
   providers: [KafkaProducerService , KafkaConsumerService],
   exports: [KafkaProducerService , KafkaConsumerService], 
 })
 export class KafkaModule {}
+
+

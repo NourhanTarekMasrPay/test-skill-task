@@ -1,7 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
-import { KAFKA_CONFIG } from './config/kafka.config';
+import { KAFKA_CONFIG } from './kafka/kafka.config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {
@@ -18,7 +18,7 @@ async function bootstrap() {
   SwaggerModule.setup('api', app, document);
 
   // Set up the HTTP listener (for REST API)
-  await app.listen(3000);
+  await app.listen(5000);
   console.log('Order Management Service (HTTP) listening on port 3000');
 
   // Set up the Kafka microservice listener
