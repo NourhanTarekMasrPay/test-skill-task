@@ -11,25 +11,17 @@ import { KafkaModule } from 'src/kafka/kafka.module';
   imports: [
     KeycloakConnectModule.registerAsync({
       useExisting: KeycloakConfigService,
-      imports: [KeycloakConfigService],}),
+    }),
     UserModule,
-    KafkaModule
+    KafkaModule, 
   ],
   providers: [
     KeycloakConfigService,
-    AuthService, 
-    {
-      provide: APP_GUARD,
-      useClass: AuthGuard,
-    },
-    {
-      provide: APP_GUARD,
-      useClass: RoleGuard,
-    },
+    AuthService,
+    { provide: APP_GUARD, useClass: AuthGuard },
+    { provide: APP_GUARD, useClass: RoleGuard },
   ],
   controllers: [AuthController],
-  exports: [AuthService] 
+  exports: [AuthService],
 })
 export class AuthModule {}
-
-
