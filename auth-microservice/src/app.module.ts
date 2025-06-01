@@ -8,6 +8,8 @@ import { AuthModule } from './auth/auth.module';
 import { AuthService } from './auth/service/auth.service';
 import { KeycloakConnectModule, PolicyEnforcementMode, TokenValidation } from 'nest-keycloak-connect';
 import { KafkaModule } from './kafka/kafka.module';
+import { KeycloakConfigModule } from './keycloak/keycloak-config.module';
+import { KeycloakConfigService } from './keycloak/keycloak-config.service';
 
 @Module({
   imports: [
@@ -15,25 +17,7 @@ import { KafkaModule } from './kafka/kafka.module';
       isGlobal: true,
     }),
     KeycloakConnectModule.registerAsync({
-      imports: [ConfigModule], 
-      useFactory: (configService: ConfigService) => {
-        const authServerUrl = configService.get<string>('KEYCLOAK_SERVER_URL');
-        const realm = configService.get<string>('KEYCLOAK_REALM');
-        const clientId = configService.get<string>('KEYCLOAK_CLIENT_ID');
-        const secret = configService.get<string>('KEYCLOAK_CLIENT_SECRET');
-        if (!authServerUrl || !realm || !clientId || !secret) {
-          throw new Error('Missing Keycloak configuration environment variables');
-        }
-        return {
-          authServerUrl,
-          realm,
-          clientId,
-          secret,
-          policyEnforcement: PolicyEnforcementMode.PERMISSIVE,
-          tokenValidation: TokenValidation.ONLINE,
-        };
-      },
-      inject: [ConfigService], 
+      useExisting: KeycloakConfigService, // Change to useExisting
     }),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
@@ -44,6 +28,7 @@ import { KafkaModule } from './kafka/kafka.module';
     }),
     UserModule,
     AuthModule,
+    KeycloakConfigModule,
     KafkaModule
   ],
   controllers: [AppController],
