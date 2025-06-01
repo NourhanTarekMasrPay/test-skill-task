@@ -47,4 +47,13 @@ export class OrderService {
     });
     return { message: 'Order deleted successfully' };
   }
+
+    async findAllByCustomerId(customerId: string): Promise<Order[]> {
+    // Assuming your Order schema has a 'customerId' field
+    const orders = await this.orderModel.find({ customerId: customerId }).exec();
+    return orders;
+  }
 }
+
+
+

@@ -1,19 +1,21 @@
-import { Controller, Get, Post, Delete, Body, Param, HttpStatus, HttpCode } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Body, Param, HttpStatus, HttpCode, Req } from '@nestjs/common';
 import { OrderService } from '../service/order.service';
 import { CreateOrderDto } from '../commons/dto/create-order.dto';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { KAFKA_CONFIG } from '../../kafka/kafka.config';
-import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiParam } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiParam, ApiBearerAuth } from '@nestjs/swagger'; // Import ApiBearerAuth
 import { Order } from '../commons/sechma/order.schema';
+import { Roles, AuthenticatedUser } from 'nest-keycloak-connect'; // Import Keycloak decorators
 
 @ApiTags('orders')
 @Controller('orders')
 export class OrderController {
   constructor(private readonly orderService: OrderService) {}
+//-----------------------------------------------------------------------------------------
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ summary: 'Create a new order' })
+  @ApiOperation({ summary: 'Create a new order (Requires authentication)' })
   @ApiBody({ type: CreateOrderDto, description: 'Details of the order to create' })
   @ApiResponse({
     status: HttpStatus.CREATED,
@@ -21,13 +23,27 @@ export class OrderController {
     type: Order,
   })
   @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Invalid input data.' })
-  async create(@Body() createOrderDto: CreateOrderDto) {
+  @ApiBearerAuth() 
+  async create(@Body() createOrderDto: CreateOrderDto, @AuthenticatedUser() user: any) {
+
     return this.orderService.create(createOrderDto);
   }
 
+//-----------------------------------------------------------------------------------------
 
+  @Get()
+  @ApiOperation({ summary: 'Get all orders for the authenticated user' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'List of orders.', type: [Order] })
+  @ApiBearerAuth()
+  @Roles({ roles: ['user'] }) // Only users with the 'user' role can access this
+  async findAll(@AuthenticatedUser() user: any) {
+  
+    const customerId = user.sub; 
+    return this.orderService.findAllByCustomerId(customerId); 
+  }
+//-----------------------------------------------------------------------------------------
   @Get(':id')
-  @ApiOperation({ summary: 'Retrieve an order by ID' })
+  @ApiOperation({ summary: 'Retrieve a specific order by ID (Accessible by any authenticated user)' })
   @ApiParam({
     name: 'id',
     type: 'string',
@@ -39,14 +55,17 @@ export class OrderController {
     type: Order,
   })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Order not found.' })
+  @ApiBearerAuth()
+  @Roles({ roles: ['user', 'admin'] }) 
   async findOne(@Param('id') id: string) {
     return this.orderService.findById(id);
   }
 
+//-----------------------------------------------------------------------------------------
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Delete an order by ID' })
+  @ApiOperation({ summary: 'Delete an order by ID (Admin only)' })
   @ApiParam({
     name: 'id',
     type: 'string',
@@ -57,16 +76,20 @@ export class OrderController {
     description: 'The order has been successfully deleted.',
   })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Order not found.' })
+  @ApiBearerAuth()
+  @Roles({ roles: ['admin'] }) // Only users with the 'admin' role can delete
   async Delete(@Param('id') id: string) {
     return this.orderService.delete(id);
   }
 
+//-----------------------------------------------------------------------------------------
 
   @MessagePattern(KAFKA_CONFIG.TOPICS.ORDER_CREATED)
   async handleOrderCreated(@Payload() message: any) {
     console.log('Received ORDER_CREATED event:', message.value);
   }
 
+//-----------------------------------------------------------------------------------------
 
   @MessagePattern(KAFKA_CONFIG.TOPICS.ORDER_DELETED)
   async handleOrderDeleted(@Payload() message: any) {

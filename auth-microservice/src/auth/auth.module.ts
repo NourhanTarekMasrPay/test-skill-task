@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { KeycloakConfigService } from './service/keycloak-config.service'; // Configuration for Keycloak
+import { KeycloakConfigService } from './keycloak/keycloak-config.service'; // Configuration for Keycloak
 import { AuthController } from './controller/auth.controller'; // Controller for authentication endpoints
 import { AuthService } from './service/auth.service'; // Keep for user profile management, not auth logic
 import { UserModule } from '../user/user.module'; // To interact with user data

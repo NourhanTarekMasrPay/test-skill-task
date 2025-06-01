@@ -27,6 +27,26 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
 
+  # Kafka UI service (ADD THIS BLOCK)
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest # Or a specific version like 0.6.0
+    container_name: kafka-ui
+    ports:
+      - "8083:8080" # Port 8080 on your host will map to Kafka UI's default port
+    depends_on:
+      - kafka # Kafka UI needs Kafka to be running
+      - zookeeper # Kafka UI might also use Zookeeper directly for some features
+    environment:
+      # This points Kafka UI to your Kafka broker.
+      # 'kafka:9092' is the internal Docker network address.
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+      KAFKA_CLUSTERS_0_NAME: Local Kafka Cluster # Name displayed in the UI
+      # Optional: To enable editing messages, creating topics, etc.
+      KAFKA_CLUSTERS_0_READONLY: "false"
+      # Optional: Point to Zookeeper if Kafka UI needs it (sometimes it's implied by brokers)
+      # KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+
+
   # MongoDB service
   mongodb:
     image: mongo:5.0

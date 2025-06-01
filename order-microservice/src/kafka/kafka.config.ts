@@ -3,7 +3,7 @@ export const KAFKA_CONFIG = {
   BROKERS: ['kafka:9092'],
   CONSUMER_GROUP_ID: 'order-management-group',
   TOPICS: {
-    ORDER_CREATED: 'user.created',
-    ORDER_DELETED: 'user.deleted',
+    ORDER_CREATED: 'order.created',
+    ORDER_DELETED: 'order.deleted',
   },
 };
