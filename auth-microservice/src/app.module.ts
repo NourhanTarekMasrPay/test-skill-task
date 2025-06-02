@@ -17,7 +17,8 @@ import { KeycloakConfigService } from './keycloak/keycloak-config.service';
       isGlobal: true,
     }),
     KeycloakConnectModule.registerAsync({
-      useExisting: KeycloakConfigService, // Change to useExisting
+      imports: [KeycloakConfigModule],
+      useExisting: KeycloakConfigService,
     }),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
@@ -28,7 +29,6 @@ import { KeycloakConfigService } from './keycloak/keycloak-config.service';
     }),
     UserModule,
     AuthModule,
-    KeycloakConfigModule,
     KafkaModule
   ],
   controllers: [AppController],

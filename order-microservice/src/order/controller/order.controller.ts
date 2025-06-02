@@ -30,18 +30,6 @@ export class OrderController {
   }
 
 //-----------------------------------------------------------------------------------------
-
-  @Get()
-  @ApiOperation({ summary: 'Get all orders for the authenticated user' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'List of orders.', type: [Order] })
-  @ApiBearerAuth()
-  @Roles({ roles: ['user'] }) // Only users with the 'user' role can access this
-  async findAll(@AuthenticatedUser() user: any) {
-  
-    const customerId = user.sub; 
-    return this.orderService.findAllByCustomerId(customerId); 
-  }
-//-----------------------------------------------------------------------------------------
   @Get(':id')
   @ApiOperation({ summary: 'Retrieve a specific order by ID (Accessible by any authenticated user)' })
   @ApiParam({

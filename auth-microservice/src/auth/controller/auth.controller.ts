@@ -12,13 +12,13 @@ export class AuthController {
   @Get('profile')
   @Roles({ roles: ['user'] })
   async getProfile(@Req() req: Request, @Res() res: Response) {
-    const kcUser = (req as any).user; 
+    const keycloakUser = (req as any).user; 
 
-    if (!kcUser || !kcUser.sub) {
+    if (!keycloakUser || !keycloakUser.sub) {
       return res.status(401).json({ message: 'No Keycloak user information found.' });
     }
 
-    let localUser: User | null = await this.authService.findOrCreateUserFromKeycloak(kcUser);
+    let localUser: User | null = await this.authService.findOrCreateUserFromKeycloak(keycloakUser);
 
     if (!localUser) {
         return res.status(500).json({ message: 'Could not synchronize user profile.' });
@@ -26,7 +26,7 @@ export class AuthController {
 
     return res.json({
         message: 'Protected profile data',
-        keycloakUser: kcUser, 
+        keycloakUser: keycloakUser, 
         localUserProfile: localUser.toObject() 
     });
   }

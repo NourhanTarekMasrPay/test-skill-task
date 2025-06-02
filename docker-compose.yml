@@ -46,7 +46,6 @@ services:
       # Optional: Point to Zookeeper if Kafka UI needs it (sometimes it's implied by brokers)
       # KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
 
-
   # MongoDB service
   mongodb:
     image: mongo:5.0
@@ -86,7 +85,6 @@ services:
     command: ["start-dev"]
     depends_on:
       - keycloak-db
-
 
   # Auth Microservice
   auth-microservice:

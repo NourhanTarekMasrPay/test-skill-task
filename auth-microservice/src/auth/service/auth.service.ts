@@ -47,7 +47,6 @@ export class AuthService {
     let user = await this.userModel.findOne({ keycloakId }).exec();
 
     if (!user) {
-      console.log(`No local profile found for Keycloak ID: ${keycloakId}. Creating a new one.`);
       try {
         user = new this.userModel({
           keycloakId: keycloakId,
@@ -55,41 +54,39 @@ export class AuthService {
           lastName: keycloakPayload.family_name || 'N/A',
           userName: keycloakPayload.preferred_username || keycloakPayload.email,
           email: keycloakPayload.email,
-          roles: keycloakPayload.roles || [], // Default to empty array if not present
-          isActive: true, // New users are active by default
-          createdAt: new Date(), // Set creation timestamp
-          // dateOfBirth and age are omitted here if not consistently provided by Keycloak or not critical for initial sync
+          roles: keycloakPayload.roles || [], 
+          isActive: true, 
+          createdAt: new Date(), 
         });
         await user.save();
 
-        // Publish user creation event to Kafka
         await this.kafkaProducerService.sendMessage('user_created', {
           userId: user.id.toString(), // Use _id from Mongoose document
           keycloakId: user.keycloakId,
           email: user.email,
           userName: user.userName,
-          // Include other relevant initial user data for downstream services
         });
 
         console.log(`Successfully created local user profile for Keycloak ID: ${keycloakId}.`);
       } catch (error) {
         console.error(`Error creating local user for Keycloak ID ${keycloakId}:`, error);
-        // Handle MongoDB duplicate key error specifically
+
         if (error.code === 11000) {
           throw new UnauthorizedException(
             'A local user with this email or username already exists. Please contact support.',
           );
         }
-        throw error; // Re-throw other unexpected errors
+        throw error; 
       }
+
     } else {
       console.log(`Local profile found for Keycloak ID: ${keycloakId}. Updating existing user data.`);
-      // Update fields that might change in Keycloak
+
       user.firstName = keycloakPayload.given_name || user.firstName;
       user.lastName = keycloakPayload.family_name || user.lastName;
-      user.email = keycloakPayload.email || user.email; // Update email if it changes in Keycloak
-      user.userName = keycloakPayload.preferred_username || keycloakPayload.email || user.userName; // Update username
-      // You might also update roles or other dynamic fields here if needed
+      user.email = keycloakPayload.email || user.email; 
+      user.userName = keycloakPayload.preferred_username || keycloakPayload.email || user.userName; 
+
       await user.save();
       console.log(`Successfully updated local user profile for Keycloak ID: ${keycloakId}.`);
     }
