@@ -1,15 +1,168 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException ,BadRequestException, InternalServerErrorException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User } from '../../user/user.schema'; // Ensure this path is correct
 import { KafkaProducerService } from 'src/kafka/kafka-producer.service'; // Ensure this path is correct
+import axios from 'axios';
+import { KeycloakConfigService } from '../../keycloak/keycloak-config.service';
+import { LoginDto } from '../commons/dto/login.dto';
+import { RegisterDto } from '../commons/dto/register.dto';
 
 @Injectable()
 export class AuthService {
+
+    private readonly keycloakAuthUrl: string;
+  private readonly keycloakRealm: string;
+  private readonly keycloakClientId: string;
+  private readonly keycloakClientSecret: string;
+
   constructor(
+    private keycloakConfigService: KeycloakConfigService ,   
     @InjectModel('User') private readonly userModel: Model<User>,
     private readonly kafkaProducerService: KafkaProducerService,
-  ) {}
+  ) {
+    this.keycloakAuthUrl = this.keycloakConfigService.getAuthServerUrl();
+    this.keycloakRealm = this.keycloakConfigService.getRealm();
+    this.keycloakClientId = this.keycloakConfigService.getClientId();
+    this.keycloakClientSecret = this.keycloakConfigService.getClientSecret();
+  }
+
+  /**
+   * Authenticates a user with Keycloak using the Password Grant Type.
+   * @param loginDto - User's username and password.
+   * @returns Keycloak token response (access_token, refresh_token, etc.).
+   */
+  async login(loginDto: LoginDto): Promise<any> {
+    const tokenUrl = `${this.keycloakAuthUrl}/protocol/openid-connect/token`;
+
+    try {
+      const response = await axios.post(
+        tokenUrl,
+        new URLSearchParams({
+          grant_type: 'password',
+          client_id: this.keycloakClientId,
+          client_secret: this.keycloakClientSecret, // Required for confidential clients
+          username: loginDto.username,
+          password: loginDto.password,
+        }).toString(),
+        {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+        },
+      );
+      return response.data; // Contains access_token, refresh_token, expires_in, etc.
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response) {
+        if (error.response.status === 401) {
+          throw new UnauthorizedException('Invalid credentials');
+        }
+        throw new UnauthorizedException(error.response.data.error_description || 'Login failed');
+      }
+      throw new InternalServerErrorException('Failed to connect to authentication server');
+    }
+  }
+
+  /**
+   * Registers a new user in Keycloak using the Admin REST API.
+   * Requires an admin token to perform this operation.
+   * @param registerDto - User details for registration.
+   * @returns Keycloak user ID or success indicator.
+   */
+  async signup(registerDto: RegisterDto): Promise<any> {
+    // Step 1: Get an Admin Token for your client (using client credentials grant)
+    // This token is used to authenticate your backend with Keycloak's Admin API.
+    let adminAccessToken: string;
+    try {
+      const adminTokenResponse = await axios.post(
+        `${this.keycloakAuthUrl}/protocol/openid-connect/token`,
+        new URLSearchParams({
+          grant_type: 'client_credentials',
+          client_id: this.keycloakClientId,
+          client_secret: this.keycloakClientSecret,
+        }).toString(),
+        {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+        },
+      );
+      adminAccessToken = adminTokenResponse.data.access_token;
+    } catch (error) {
+      console.error('Failed to get admin token for registration:', error.response?.data || error.message);
+      throw new InternalServerErrorException('Failed to authenticate as admin for registration');
+    }
+
+    // Step 2: Use the Admin Token to create the user via Keycloak Admin API
+    const usersAdminUrl = `<span class="math-inline">\{this\.keycloakAuthUrl\}/admin/realms/</span>{this.keycloakRealm}/users`;
+
+    try {
+      const response = await axios.post(
+        usersAdminUrl,
+        {
+          username: registerDto.username,
+          email: registerDto.email,
+          firstName: registerDto.firstName,
+          lastName: registerDto.lastName,
+          enabled: true, // New users are enabled by default
+          credentials: [
+            {
+              type: 'password',
+              value: registerDto.password,
+              temporary: false, // Set to true if you want the user to change password on first login
+            },
+          ],
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${adminAccessToken}`,
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+
+      // Keycloak usually returns 201 Created on success, with Location header indicating the user's ID
+      // You might parse the Location header or simply return success.
+      console.log('User registered successfully in Keycloak:', response.headers.location);
+      return { message: 'User registered successfully', userId: response.headers.location?.split('/').pop() };
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response) {
+        if (error.response.status === 409) { // Conflict - User already exists
+          throw new BadRequestException('User with this username or email already exists.');
+        }
+        throw new BadRequestException(error.response.data.errorMessage || 'User registration failed');
+      }
+      throw new InternalServerErrorException('Failed to register user in Keycloak');
+    }
+  }
+
+  // You can add other functions here, e.g., to verify token, get user info, etc.
+  async refreshToken(refreshToken: string): Promise<any> {
+    const tokenUrl = `${this.keycloakAuthUrl}/protocol/openid-connect/token`;
+
+    try {
+      const response = await axios.post(
+        tokenUrl,
+        new URLSearchParams({
+          grant_type: 'refresh_token',
+          client_id: this.keycloakClientId,
+          client_secret: this.keycloakClientSecret, // Required for confidential clients
+          refresh_token: refreshToken,
+        }).toString(),
+        {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+        },
+      );
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response) {
+        throw new UnauthorizedException(error.response.data.error_description || 'Refresh token failed');
+      }
+      throw new InternalServerErrorException('Failed to refresh token');
+    }
+  }
 
   /**
    * Synchronizes user data from Keycloak into the local MongoDB database.
