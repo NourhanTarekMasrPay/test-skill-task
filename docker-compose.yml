@@ -102,7 +102,7 @@ services:
       KEYCLOAK_SERVER_URL: http://keycloak:8080
       KEYCLOAK_REALM: myrealm
       KEYCLOAK_CLIENT_ID: auth-microservice
-      KEYCLOAK_CLIENT_SECRET: 1JGbdWwowlxk2KwBKsB4UDL9Rp6LNvNQ
+      KEYCLOAK_CLIENT_SECRET: bxbAWXEZBoTwAa6UiXBZTFhHz7X2oI7G
     depends_on:
       - kafka
       - mongodb
@@ -119,10 +119,10 @@ services:
     environment:
       KAFKA_BROKERS: kafka:9092
       MONGODB_URI: mongodb://root:example@mongodb:27017/order_db?authSource=admin
-      KEYCLOAK_SERVER_URL: http://keycloak:8082
+      KEYCLOAK_SERVER_URL: http://keycloak:8080
       KEYCLOAK_REALM: myrealm
       KEYCLOAK_CLIENT_ID: order-microservice
-      KEYCLOAK_CLIENT_SECRET: A34hWDnQyWg2XUStIvTPUergisVfojX2  # Replace with actual secret nour
+      KEYCLOAK_CLIENT_SECRET: Ts5rl6m1QFCm2DuRXSbReNsLZaedZLzy  
     depends_on:
       - kafka
       - mongodb
