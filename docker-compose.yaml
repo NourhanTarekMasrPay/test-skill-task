@@ -27,24 +27,19 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
 
-  # Kafka UI service (ADD THIS BLOCK)
-  kafka-ui:
-    image: provectuslabs/kafka-ui:latest # Or a specific version like 0.6.0
-    container_name: kafka-ui
-    ports:
-      - "8083:8080" # Port 8080 on your host will map to Kafka UI's default port
-    depends_on:
-      - kafka # Kafka UI needs Kafka to be running
-      - zookeeper # Kafka UI might also use Zookeeper directly for some features
-    environment:
-      # This points Kafka UI to your Kafka broker.
-      # 'kafka:9092' is the internal Docker network address.
-      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
-      KAFKA_CLUSTERS_0_NAME: Local Kafka Cluster # Name displayed in the UI
-      # Optional: To enable editing messages, creating topics, etc.
-      KAFKA_CLUSTERS_0_READONLY: "false"
-      # Optional: Point to Zookeeper if Kafka UI needs it (sometimes it's implied by brokers)
-      # KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+  # Kafka UI service (Re-added)
+  # kafka-ui:
+  #   image: provectuslabs/kafka-ui:latest
+  #   container_name: kafka-ui
+  #   ports:
+  #     - "8083:8080"
+  #   depends_on:
+  #     - kafka
+  #     - zookeeper
+  #   environment:
+  #     KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+  #     KAFKA_CLUSTERS_0_NAME: Local Kafka Cluster
+  #     KAFKA_CLUSTERS_0_READONLY: "false"
 
   # MongoDB service
   mongodb:
@@ -69,7 +64,7 @@ services:
     volumes:
       - keycloak_db_data:/var/lib/postgresql/data
 
-  # Keycloak service
+  # Keycloak service (Re-added)
   keycloak:
     image: quay.io/keycloak/keycloak:18.0.0
     container_name: keycloak
@@ -96,17 +91,15 @@ services:
       - "8081:3000"
     environment:
       KAFKA_BROKERS: kafka:9092
-      MONGO_URI: mongodb://root:password@mongodb:27017/your_auth_db?authSource=admin
       KEYCLOAK_SERVER_URL: http://keycloak:8080
       KEYCLOAK_REALM: myrealm
       KEYCLOAK_CLIENT_ID: auth-microservice
       KEYCLOAK_CLIENT_SECRET: bxbAWXEZBoTwAa6UiXBZTFhHz7X2oI7G
     depends_on:
       - kafka
-      - mongodb
       - keycloak
 
-  # Order Microservice
+  # Order Microservice (Still commented out)
   order-microservice:
     build:
       context: ./order-microservice

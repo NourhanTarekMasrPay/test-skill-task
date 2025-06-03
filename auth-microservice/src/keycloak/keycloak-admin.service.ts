@@ -47,7 +47,7 @@ export class KeycloakAdminService {
     const { adminUrl } = keycloakUrls(keycloakConfig.realm);
 
     const payload = {
-      username: registerDto.username,
+      userName: registerDto.userName,
       email: registerDto.email,
       firstName: registerDto.firstName,
       lastName: registerDto.lastName,
@@ -60,7 +60,9 @@ export class KeycloakAdminService {
         },
       ],
     };
-
+    console.log('Payload to token user:', token);
+    console.log('Payload to admin user:', adminUrl);
+    console.log('Payload to create user:', payload);
     try {
       await firstValueFrom(
         this.httpService.post(adminUrl, payload, {

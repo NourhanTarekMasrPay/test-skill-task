@@ -4,31 +4,34 @@ import { OrderController } from './controller/order.controller';
 import { OrderService } from './service/order.service';
 import { OrderSchema } from './commons/sechma/order.schema';
 import { KafkaModule } from 'src/kafka/kafka.module';
-import { KeycloakConfigService } from 'src/keycloak/keycloak-config.service';
+import { KeycloakConfigModule } from 'src/keycloak/keycloak-config.module';
 import { APP_GUARD } from '@nestjs/core';
 import { AuthGuard, KeycloakConnectModule, ResourceGuard, RoleGuard } from 'nest-keycloak-connect';
+import { KeycloakConfigService } from 'src/keycloak/keycloak-config.service';
 
 @Module({
-  imports: [MongooseModule.forFeature([{ name: 'Order', schema: OrderSchema }]), KafkaModule ,  
+  imports: [
+    MongooseModule.forFeature([{ name: 'Order', schema: OrderSchema }]),
+    KafkaModule,
+    KeycloakConfigModule, //  Import the config module here
     KeycloakConnectModule.registerAsync({
-      useExisting: KeycloakConfigService,
-    }),],
+      imports: [KeycloakConfigModule], //  Also include in registerAsync
+      useClass: KeycloakConfigService,
+    }),
+  ],
   controllers: [OrderController],
- providers: [
+  providers: [
     OrderService,
-    KeycloakConfigService, // Provide KeycloakConfigService here
-    // These global guards apply to all routes by default.
-    // You can then use @Public() to exempt specific routes.
     {
-      provide: APP_GUARD, // This is a global authentication guard for JWTs
+      provide: APP_GUARD,
       useClass: AuthGuard,
     },
     {
-      provide: APP_GUARD, // This is a global resource guard (for Keycloak's resource-based policies)
+      provide: APP_GUARD,
       useClass: ResourceGuard,
     },
     {
-      provide: APP_GUARD, // This is a global role guard (for Keycloak roles)
+      provide: APP_GUARD,
       useClass: RoleGuard,
     },
   ],

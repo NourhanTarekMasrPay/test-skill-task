@@ -19,3 +19,5 @@ export const keycloakUrls = (realm: string) => ({
   adminUrl: `${process.env.KEYCLOAK_SERVER_URL}/admin/realms/${realm}/users`,
   publicKeyUrl: `${process.env.KEYCLOAK_SERVER_URL}/realms/${realm}/protocol/openid-connect/certs`,
 });
+
+//{keycloak_base_url}/admin/realms/{your_realm_name}/{resource_path}

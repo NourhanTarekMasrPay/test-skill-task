@@ -12,10 +12,10 @@ import { KeycloakConfigModule } from './keycloak/keycloak-config.module';
 @Module({
   imports: [
     MongooseModule.forRoot(process.env.MONGODB_URI || 'mongodb://root:example@mongodb:27017/order_db?authSource=admin'),     
-    KeycloakConnectModule.registerAsync({
-      imports: [KeycloakConfigModule],
-      useExisting: KeycloakConfigService,
-    }),
+    // KeycloakConnectModule.registerAsync({
+    //   imports: [KeycloakConfigModule],
+    //   useExisting: KeycloakConfigService,
+    // }),
     KafkaModule, 
     OrderModule
   ],

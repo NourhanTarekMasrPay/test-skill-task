@@ -5,7 +5,7 @@ export class RegisterDto {
   @IsString()
   @IsNotEmpty()
   @MinLength(3)
-  username: string;
+  userName: string;
 
   @IsString()
   @IsNotEmpty()
