@@ -9,7 +9,7 @@ export class RegisterDto {
 
   @IsString()
   @IsNotEmpty()
-  @MinLength(6) // Adjust min length as per Keycloak password policy
+  @MinLength(6)
   password: string;
 
   @IsString()
@@ -18,8 +18,8 @@ export class RegisterDto {
   email: string;
 
   @IsString()
-  firstName?: string; // Optional
+  firstName: string; 
 
   @IsString()
-  lastName?: string;  // Optional
+  lastName: string; 
 }

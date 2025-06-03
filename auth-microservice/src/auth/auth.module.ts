@@ -1,26 +1,16 @@
 import { Module } from '@nestjs/common';
-import { KeycloakConfigService } from '../keycloak/keycloak-config.service'; // Configuration for Keycloak
-import { AuthController } from './controller/auth.controller'; // Controller for authentication endpoints
-import { AuthService } from './service/auth.service'; // Keep for user profile management, not auth logic
-import { UserModule } from '../user/user.module'; // To interact with user data
-import { APP_GUARD } from '@nestjs/core';
-import { AuthGuard, RoleGuard , KeycloakConnectModule } from 'nest-keycloak-connect';
-import { KafkaModule } from 'src/kafka/kafka.module';
+import { PassportModule } from '@nestjs/passport';
+import { AuthService } from './service/auth.service';
+import { AuthController } from './controller/auth.controller';
+import { HttpModule } from '@nestjs/axios';
+import { KeycloakAdminService ,KeycloakStrategy } from 'src/keycloak'
 
 @Module({
   imports: [
-    KeycloakConnectModule.registerAsync({
-      useExisting: KeycloakConfigService,
-    }),
-    UserModule,
-    KafkaModule, 
+    PassportModule.register({ defaultStrategy: 'keycloak' }),
+    HttpModule,
   ],
-  providers: [
-    KeycloakConfigService,
-    AuthService,
-    { provide: APP_GUARD, useClass: AuthGuard },
-    { provide: APP_GUARD, useClass: RoleGuard },
-  ],
+  providers: [KeycloakStrategy, AuthService, KeycloakAdminService],
   controllers: [AuthController],
   exports: [AuthService],
 })
