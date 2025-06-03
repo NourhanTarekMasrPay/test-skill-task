@@ -4,20 +4,13 @@ import { OrderController } from './controller/order.controller';
 import { OrderService } from './service/order.service';
 import { OrderSchema } from './commons/sechma/order.schema';
 import { KafkaModule } from 'src/kafka/kafka.module';
-import { KeycloakConfigModule } from 'src/keycloak/keycloak-config.module';
 import { APP_GUARD } from '@nestjs/core';
 import { AuthGuard, KeycloakConnectModule, ResourceGuard, RoleGuard } from 'nest-keycloak-connect';
-import { KeycloakConfigService } from 'src/keycloak/keycloak-config.service';
 
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: 'Order', schema: OrderSchema }]),
     KafkaModule,
-    KeycloakConfigModule, //  Import the config module here
-    KeycloakConnectModule.registerAsync({
-      imports: [KeycloakConfigModule], //  Also include in registerAsync
-      useClass: KeycloakConfigService,
-    }),
   ],
   controllers: [OrderController],
   providers: [

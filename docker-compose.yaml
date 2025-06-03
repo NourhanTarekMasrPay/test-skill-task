@@ -56,7 +56,7 @@ services:
   # Keycloak database
   keycloak-db:
     image: postgres:13
-    container_name: keycloak-db
+    container_name: keycloak-db_container
     environment:
       POSTGRES_DB: keycloak
       POSTGRES_USER: keycloak
@@ -94,7 +94,7 @@ services:
       KEYCLOAK_SERVER_URL: http://keycloak:8080
       KEYCLOAK_REALM: myrealm
       KEYCLOAK_CLIENT_ID: auth-microservice
-      KEYCLOAK_CLIENT_SECRET: bxbAWXEZBoTwAa6UiXBZTFhHz7X2oI7G
+      KEYCLOAK_CLIENT_SECRET: Az4BXFu0s0ACaDNQhCd1EOE0F4skwA47
     depends_on:
       - kafka
       - keycloak
