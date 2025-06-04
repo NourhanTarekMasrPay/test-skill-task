@@ -1,5 +1,11 @@
+version: '3.8' # Use a recent Docker Compose file format for healthcheck features
+
+networks:
+  my-network:
+    driver: bridge
+
 services:
-  # Zookeeper service (required by Kafka)
+  # ============================ Zookeeper service (required by Kafka) ====================================
   zookeeper:
     image: confluentinc/cp-zookeeper:7.0.1
     container_name: zookeeper
@@ -8,8 +14,10 @@ services:
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - my-network
 
-  # Kafka service
+  #============================================ Kafka service =============================================
   kafka:
     image: confluentinc/cp-kafka:7.0.1
     container_name: kafka
@@ -26,22 +34,29 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: ${KAFKA_AUTO_CREATE_TOPICS_ENABLE}
+      KAFKA_NUM_PARTITIONS: ${KAFKA_NUM_PARTITIONS}
+      KAFKA_DEFAULT_REPLICATION_FACTOR: ${KAFKA_DEFAULT_REPLICATION_FACTOR}
+    networks:
+      - my-network
 
-  # Kafka UI service (Re-added)
-  # kafka-ui:
-  #   image: provectuslabs/kafka-ui:latest
-  #   container_name: kafka-ui
-  #   ports:
-  #     - "8083:8080"
-  #   depends_on:
-  #     - kafka
-  #     - zookeeper
-  #   environment:
-  #     KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
-  #     KAFKA_CLUSTERS_0_NAME: Local Kafka Cluster
-  #     KAFKA_CLUSTERS_0_READONLY: "false"
+  # ==================================== Kafka UI service =============================================
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka-ui
+    ports:
+      - "8083:8080"
+    depends_on:
+      - kafka
+      - zookeeper
+    environment:
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+      KAFKA_CLUSTERS_0_NAME: Local Kafka Cluster
+      KAFKA_CLUSTERS_0_READONLY: "false"
+    networks:
+      - my-network     
 
-  # MongoDB service
+  # ====================================  MongoDB service ====================================
   mongodb:
     image: mongo:5.0
     container_name: mongodb
@@ -50,74 +65,109 @@ services:
     volumes:
       - mongodb_data:/data/db
     environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: password
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
+    networks:
+      - my-network
+    healthcheck:
+      test: ["CMD", "mongo", "--quiet", "--eval", "db.runCommand({ping: 1}).ok"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 20s 
 
-  # Keycloak database
+  # ==================================== Keycloak database ====================================
   keycloak-db:
     image: postgres:13
     container_name: keycloak-db_container
     environment:
       POSTGRES_DB: keycloak
       POSTGRES_USER: keycloak
-      POSTGRES_PASSWORD: password
+      POSTGRES_PASSWORD: password 
     volumes:
       - keycloak_db_data:/var/lib/postgresql/data
+    networks:
+      - my-network
 
-  # Keycloak service (Re-added)
+  # ==================================== Keycloak service  ==========================================
   keycloak:
     image: quay.io/keycloak/keycloak:18.0.0
     container_name: keycloak
     environment:
-      KEYCLOAK_ADMIN: admin
-      KEYCLOAK_ADMIN_PASSWORD: admin
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN_USER}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
       KC_DB: postgres
       KC_DB_URL: jdbc:postgresql://keycloak-db:5432/keycloak
       KC_DB_USERNAME: keycloak
-      KC_DB_PASSWORD: password
+      KC_DB_PASSWORD: password 
     ports:
       - "8080:8080"
     command: ["start-dev"]
     depends_on:
       - keycloak-db
+    networks:
+      - my-network
 
-  # Auth Microservice
+  # ==================================== Auth Microservice ====================================
   auth-microservice:
     build:
       context: ./auth-microservice
       dockerfile: Dockerfile
     container_name: auth-microservice
     ports:
-      - "8081:3000"
-    environment:
-      KAFKA_BROKERS: kafka:9092
-      KEYCLOAK_SERVER_URL: http://keycloak:8080
-      KEYCLOAK_REALM: myrealm
-      KEYCLOAK_CLIENT_ID: auth-microservice
-      KEYCLOAK_CLIENT_SECRET: Az4BXFu0s0ACaDNQhCd1EOE0F4skwA47
+      - "${AUTH_SERVICE_PORT}:${AUTH_SERVICE_PORT}" 
+    env_file: 
+      - ./.env
+    volumes:
+      - ./auth-microservice:/usr/src/app
+      - /usr/src/app/node_modules
     depends_on:
       - kafka
       - keycloak
+    networks:
+      - my-network
+    command: sh -c "npm install && npm run start:dev"
 
-  # Order Microservice (Still commented out)
+  # ==================================== Order Microservice ====================================
   order-microservice:
     build:
       context: ./order-microservice
       dockerfile: Dockerfile
     container_name: order-microservice
     ports:
-      - "8082:5000"
-    environment:
-      KAFKA_BROKERS: kafka:9092
-      MONGODB_URI: mongodb://root:example@mongodb:27017/order_db?authSource=admin
-      KEYCLOAK_SERVER_URL: http://keycloak:8080
-      KEYCLOAK_REALM: myrealm
-      KEYCLOAK_CLIENT_ID: order-microservice
-      KEYCLOAK_CLIENT_SECRET: Ts5rl6m1QFCm2DuRXSbReNsLZaedZLzy  
+      - "${ORDER_SERVICE_PORT}:${ORDER_SERVICE_PORT}" 
+    env_file: 
+      - ./.env
+    volumes:
+      - ./order-microservice:/usr/src/app
+      - /usr/src/app/node_modules
     depends_on:
       - kafka
       - mongodb
       - keycloak
+    networks:
+      - my-network
+    command: sh -c "npm install && npm run start:dev"
+
+  # ==================================== Web-based MongoDB admin interface ====================================
+  mongo-express:
+    image: mongo-express
+    container_name: mongo-express
+    ports:
+      - "8084:8081"
+    environment:
+      ME_CONFIG_MONGOD_SERVER: mongodb 
+      ME_CONFIG_MONGOD_PORT: 27017
+      ME_CONFIG_MONGOD_ENABLE_ADMIN: "true"
+      ME_CONFIG_MONGOD_AUTH_USERNAME: ${MONGO_ROOT_USERNAME} 
+      ME_CONFIG_MONGOD_AUTH_PASSWORD: ${MONGO_ROOT_PASSWORD} 
+      ME_CONFIG_BASICAUTH_USERNAME: admin 
+      ME_CONFIG_BASICAUTH_PASSWORD: password 
+    networks:
+      - my-network
+    depends_on:
+      mongodb:
+        condition: service_healthy
 
 volumes:
   mongodb_data:

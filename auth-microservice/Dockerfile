@@ -1,23 +1,16 @@
-# Stage 1: Build the Nest.js application
-
-FROM node:18-alpine AS build 
-
+FROM node:20-alpine AS build
 WORKDIR /app
 COPY package*.json ./
-RUN npm install --force
+RUN npm ci --force
 COPY . .
 RUN npm run build
 
 
-
-
-# Stage 2: Run the Nest.js application
-
-FROM node:18-alpine
-
+FROM node:20-alpine AS production
 WORKDIR /app
 COPY --from=build /app/dist ./dist
-COPY package*.json ./
-RUN npm install --omit=dev --force 
-EXPOSE 3000 
+COPY --from=build /app/package*.json ./
+RUN npm install --omit=dev --force
+EXPOSE 3000
+
 CMD ["node", "dist/main"]

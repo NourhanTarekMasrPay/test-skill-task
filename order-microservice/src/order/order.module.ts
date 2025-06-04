@@ -4,8 +4,8 @@ import { OrderController } from './controller/order.controller';
 import { OrderService } from './service/order.service';
 import { OrderSchema } from './commons/sechma/order.schema';
 import { KafkaModule } from 'src/kafka/kafka.module';
-import { APP_GUARD } from '@nestjs/core';
-import { AuthGuard, KeycloakConnectModule, ResourceGuard, RoleGuard } from 'nest-keycloak-connect';
+import { APP_GUARD  } from '@nestjs/core';
+import { AuthGuard, ResourceGuard, RoleGuard } from 'nest-keycloak-connect';
 
 @Module({
   imports: [
