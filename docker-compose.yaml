@@ -1,5 +1,3 @@
-version: '3.8' # Use a recent Docker Compose file format for healthcheck features
-
 networks:
   my-network:
     driver: bridge

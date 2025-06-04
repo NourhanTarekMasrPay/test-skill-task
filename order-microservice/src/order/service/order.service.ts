@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Order } from '../commons/sechma/order.schema';
@@ -11,7 +11,7 @@ import { KAFKA_CONFIG } from 'src/kafka/kafka.config';
 export class OrderService {
   constructor(
     @InjectModel('Order') private readonly orderModel: Model<Order>,
-    private readonly kafkaClient: ClientKafka,
+    @Inject('KAFKA_CLIENT') private readonly kafkaClient: ClientKafka, // This is the missing dependency
   ) {}
 
   async create(createOrderDto: CreateOrderDto): Promise<Order> {
