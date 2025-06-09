@@ -1,8 +1,6 @@
 import { Controller, Get, Post, Delete, Body, Param, HttpStatus, HttpCode, Req } from '@nestjs/common';
 import { OrderService } from '../service/order.service';
 import { CreateOrderDto } from '../commons/dto/create-order.dto';
-import { MessagePattern, Payload } from '@nestjs/microservices';
-import { KAFKA_CONFIG } from '../../kafka/kafka.config';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiParam, ApiBearerAuth } from '@nestjs/swagger'; // Import ApiBearerAuth
 import { Order } from '../commons/sechma/order.schema';
 import { Roles, AuthenticatedUser } from 'nest-keycloak-connect'; // Import Keycloak decorators
@@ -11,7 +9,7 @@ import { Roles, AuthenticatedUser } from 'nest-keycloak-connect'; // Import Keyc
 @Controller('orders')
 export class OrderController {
   constructor(private readonly orderService: OrderService) {}
-//-----------------------------------------------------------------------------------------
+//======================================================================================================================
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
@@ -23,13 +21,13 @@ export class OrderController {
     type: Order,
   })
   @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Invalid input data.' })
-  @ApiBearerAuth() 
+  // @ApiBearerAuth() 
   async create(@Body() createOrderDto: CreateOrderDto, @AuthenticatedUser() user: any) {
 
-    return this.orderService.create(createOrderDto);
+    return this.orderService.createOrder(createOrderDto);
   }
 
-//-----------------------------------------------------------------------------------------
+//======================================================================================================================
   @Get(':id')
   @ApiOperation({ summary: 'Retrieve a specific order by ID (Accessible by any authenticated user)' })
   @ApiParam({
@@ -43,13 +41,13 @@ export class OrderController {
     type: Order,
   })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Order not found.' })
-  @ApiBearerAuth()
-  @Roles({ roles: ['user', 'admin'] }) 
+  // @ApiBearerAuth()
+  // @Roles({ roles: ['user', 'admin'] }) 
   async findOne(@Param('id') id: string) {
-    return this.orderService.findById(id);
+    return this.orderService.getOrderById(id);
   }
 
-//-----------------------------------------------------------------------------------------
+//======================================================================================================================
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
@@ -64,23 +62,25 @@ export class OrderController {
     description: 'The order has been successfully deleted.',
   })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Order not found.' })
-  @ApiBearerAuth()
-  @Roles({ roles: ['admin'] }) // Only users with the 'admin' role can delete
+  // @ApiBearerAuth()
+  // @Roles({ roles: ['admin'] }) // Only users with the 'admin' role can delete
   async Delete(@Param('id') id: string) {
-    return this.orderService.delete(id);
+    return this.orderService.deleteOrder(id);
   }
 
-//-----------------------------------------------------------------------------------------
-
-  @MessagePattern(KAFKA_CONFIG.TOPICS.ORDER_CREATED)
-  async handleOrderCreated(@Payload() message: any) {
-    console.log('Received ORDER_CREATED event:', message.value);
+  //======================================================================================================================
+  @Get('')
+  @ApiOperation({ summary: 'Retrieve a specific order by ID (Accessible by any authenticated user)' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'The orders details.',
+    type: Order,
+  })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Order not found.' })
+  // @ApiBearerAuth()
+  // @Roles({ roles: ['user', 'admin'] }) 
+  async findAll() {
+    return this.orderService.getAllOrders();
   }
 
-//-----------------------------------------------------------------------------------------
-
-  @MessagePattern(KAFKA_CONFIG.TOPICS.ORDER_DELETED)
-  async handleOrderDeleted(@Payload() message: any) {
-    console.log('Received ORDER_DELETED event:', message.value);
-  }
 }

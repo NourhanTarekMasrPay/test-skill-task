@@ -1,32 +1,32 @@
-import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
-import { Producer, Kafka } from 'kafkajs';
-import { KAFKA_CONFIG } from './kafka.config'; // Adjust the import path as necessary
+import { Injectable, OnModuleInit, OnModuleDestroy, Logger, Inject } from '@nestjs/common';
+import { ClientKafka } from '@nestjs/microservices'; // This is the client from ClientsModule
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class KafkaProducerService implements OnModuleInit, OnModuleDestroy {
-  private kafka: Kafka;
-  private producer: Producer;
+  private readonly logger = new Logger(KafkaProducerService.name);
 
-  constructor() {
-    this.kafka = new Kafka({
-      clientId: KAFKA_CONFIG.CLIENT_ID || 'default_client_id',
-      brokers: KAFKA_CONFIG.BROKERS || ['localhost:9092'],
-    });
-    this.producer = this.kafka.producer();
-  }
+  constructor(
+    @Inject('ORDER_KAFKA_SERVICE') private readonly clientKafka: ClientKafka  ) {}
 
   async onModuleInit() {
-    await this.producer.connect();
+    await this.clientKafka.connect(); 
+    this.logger.log('Kafka Producer client connected.');
   }
 
   async onModuleDestroy() {
-    await this.producer.disconnect();
+    await this.clientKafka.close();
+    this.logger.log('Kafka Producer client disconnected.');
   }
 
-  async sendMessage(topic: string, message: any) {
-    await this.producer.send({
-      topic,
-      messages: [{ value: JSON.stringify(message) }],
-    });
+  async sendMessage(topic: string, message: any): Promise<void> {
+    try {
+
+      await this.clientKafka.emit(topic, message);
+      this.logger.log(`Message sent to topic ${topic}: ${JSON.stringify(message)}`);
+    } catch (error) {
+      this.logger.error(`Failed to send message to topic ${topic}: ${error.message}`, error.stack);
+      throw error; 
+    }
   }
 }

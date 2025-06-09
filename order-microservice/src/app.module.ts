@@ -1,23 +1,33 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { OrderModule } from './order/order.module';
-import { AppService } from './app.service';
+import { ConfigModule, ConfigService } from '@nestjs/config'; 
+import { KafkaModule } from './kafka/kafka.module'; 
+import { KafkaConsumerService } from './kafka/kafka-consumer.service';
 import { AppController } from './app.controller';
-import { KafkaModule } from './kafka/kafka.module';
-import { AuthGuard, RoleGuard } from 'nest-keycloak-connect';
-import { APP_GUARD } from '@nestjs/core';
+import { AppService } from './app.service';
 
 @Module({
   imports: [
-    MongooseModule.forRoot(process.env.MONGODB_URI || 'mongodb://root:example@mongodb:27017/order_db?authSource=admin'),     
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: '../../.env',
+    }),
+    MongooseModule.forRootAsync({ 
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => ({
+        uri: configService.get<string>('ORDER_MONGODB_URI'),
+      }),
+      inject: [ConfigService],
+    }),
     KafkaModule, 
-    OrderModule
+    OrderModule,
   ],
-  providers: [
-    { provide: APP_GUARD, useClass: AuthGuard },
-    { provide: APP_GUARD, useClass: RoleGuard },
-    AppService
-  ],
-  controllers: [AppController],
+  // providers: [
+  //   { provide: APP_GUARD, useClass: AuthGuard },
+  //   { provide: APP_GUARD, useClass: RoleGuard },
+  // ],
+  providers: [KafkaConsumerService , AppService],
+  controllers: [AppController], 
 })
 export class AppModule {}

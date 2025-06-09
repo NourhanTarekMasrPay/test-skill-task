@@ -24,12 +24,8 @@ async function bootstrap() {
   SwaggerModule.setup('api', app, document);
   //==============================================================================================================================
   app.enableCors();
-
-  await app.listen(HTTP_PORT);
-  console.log(`Order Management Service (HTTP) listening on port ${HTTP_PORT}`);
-
   // ==========================================Set up the Kafka microservice listener ==========================================
-  const microservice = app.connectMicroservice<MicroserviceOptions>({
+  await app.connectMicroservice<MicroserviceOptions>({
     transport: Transport.KAFKA,
     options: {
       client: {
@@ -44,10 +40,12 @@ async function bootstrap() {
       },
     },
   });
+  await app.startAllMicroservices();
+  console.log('Order microservice is listening for messages...');
 //==============================================================================================================================
-  // Start the Kafka microservice
-  await microservice.listen();
-  console.log('Order Management Service (Kafka) microservice listening ');
 
+  await app.listen(HTTP_PORT , () => {
+    console.log(`Order Management Service is running on: http://localhost:${HTTP_PORT}`); 
+  })
 }
 bootstrap();

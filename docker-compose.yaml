@@ -39,20 +39,20 @@ services:
       - my-network
 
   # ==================================== Kafka UI service =============================================
-  kafka-ui:
-    image: provectuslabs/kafka-ui:latest
-    container_name: kafka-ui
-    ports:
-      - "8083:8080"
-    depends_on:
-      - kafka
-      - zookeeper
-    environment:
-      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
-      KAFKA_CLUSTERS_0_NAME: Local Kafka Cluster
-      KAFKA_CLUSTERS_0_READONLY: "false"
-    networks:
-      - my-network     
+  # kafka-ui:
+  #   image: provectuslabs/kafka-ui:latest
+  #   container_name: kafka-ui
+  #   ports:
+  #     - "8083:8080"
+  #   depends_on:
+  #     - kafka
+  #     - zookeeper
+  #   environment:
+  #     KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+  #     KAFKA_CLUSTERS_0_NAME: Local Kafka Cluster
+  #     KAFKA_CLUSTERS_0_READONLY: "false"
+  #   networks:
+  #     - my-network     
 
   # ====================================  MongoDB service ====================================
   mongodb:
@@ -75,56 +75,56 @@ services:
       start_period: 20s 
 
   # ==================================== Keycloak database ====================================
-  keycloak-db:
-    image: postgres:13
-    container_name: keycloak-db_container
-    environment:
-      POSTGRES_DB: keycloak
-      POSTGRES_USER: keycloak
-      POSTGRES_PASSWORD: password 
-    volumes:
-      - keycloak_db_data:/var/lib/postgresql/data
-    networks:
-      - my-network
+  # keycloak-db:
+  #   image: postgres:13
+  #   container_name: keycloak-db_container
+  #   environment:
+  #     POSTGRES_DB: keycloak
+  #     POSTGRES_USER: keycloak
+  #     POSTGRES_PASSWORD: password 
+  #   volumes:
+  #     - keycloak_db_data:/var/lib/postgresql/data
+  #   networks:
+  #     - my-network
 
   # ==================================== Keycloak service  ==========================================
-  keycloak:
-    image: quay.io/keycloak/keycloak:18.0.0
-    container_name: keycloak
-    environment:
-      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN_USER}
-      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
-      KC_DB: postgres
-      KC_DB_URL: jdbc:postgresql://keycloak-db:5432/keycloak
-      KC_DB_USERNAME: keycloak
-      KC_DB_PASSWORD: password 
-    ports:
-      - "8080:8080"
-    command: ["start-dev"]
-    depends_on:
-      - keycloak-db
-    networks:
-      - my-network
+  # keycloak:
+  #   image: quay.io/keycloak/keycloak:18.0.0
+  #   container_name: keycloak
+  #   environment:
+  #     KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN_USER}
+  #     KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+  #     KC_DB: postgres
+  #     KC_DB_URL: jdbc:postgresql://keycloak-db:5432/keycloak
+  #     KC_DB_USERNAME: keycloak
+  #     KC_DB_PASSWORD: password 
+  #   ports:
+  #     - "8080:8080"
+  #   command: ["start-dev"]
+  #   depends_on:
+  #     - keycloak-db
+  #   networks:
+  #     - my-network
 
-  # ==================================== Auth Microservice ====================================
-  auth-microservice:
-    build:
-      context: ./auth-microservice
-      dockerfile: Dockerfile
-    container_name: auth-microservice
-    ports:
-      - "${AUTH_SERVICE_PORT}:${AUTH_SERVICE_PORT}" 
-    env_file: 
-      - ./.env
-    volumes:
-      - ./auth-microservice:/usr/src/app
-      - /usr/src/app/node_modules
-    depends_on:
-      - kafka
-      - keycloak
-    networks:
-      - my-network
-    command: sh -c "npm install && npm run start:dev"
+  # # ==================================== Auth Microservice ====================================
+  # auth-microservice:
+  #   build:
+  #     context: ./auth-microservice
+  #     dockerfile: Dockerfile
+  #   container_name: auth-microservice
+  #   ports:
+  #     - "${AUTH_SERVICE_PORT}:${AUTH_SERVICE_PORT}" 
+  #   env_file: 
+  #     - ./.env
+  #   volumes:
+  #     - ./auth-microservice:/usr/src/app
+  #     - /usr/src/app/node_modules
+  #   depends_on:
+  #     - kafka
+  #     - keycloak
+  #   networks:
+  #     - my-network
+  #   command: sh -c "npm install && npm run start:dev"
 
   # ==================================== Order Microservice ====================================
   order-microservice:
@@ -142,30 +142,29 @@ services:
     depends_on:
       - kafka
       - mongodb
-      - keycloak
     networks:
       - my-network
     command: sh -c "npm install && npm run start:dev"
 
   # ==================================== Web-based MongoDB admin interface ====================================
-  mongo-express:
-    image: mongo-express
-    container_name: mongo-express
-    ports:
-      - "8084:8081"
-    environment:
-      ME_CONFIG_MONGOD_SERVER: mongodb 
-      ME_CONFIG_MONGOD_PORT: 27017
-      ME_CONFIG_MONGOD_ENABLE_ADMIN: "true"
-      ME_CONFIG_MONGOD_AUTH_USERNAME: ${MONGO_ROOT_USERNAME} 
-      ME_CONFIG_MONGOD_AUTH_PASSWORD: ${MONGO_ROOT_PASSWORD} 
-      ME_CONFIG_BASICAUTH_USERNAME: admin 
-      ME_CONFIG_BASICAUTH_PASSWORD: password 
-    networks:
-      - my-network
-    depends_on:
-      mongodb:
-        condition: service_healthy
+  # mongo-express:
+  #   image: mongo-express
+  #   container_name: mongo-express
+  #   ports:
+  #     - "8084:8081"
+  #   environment:
+  #     ME_CONFIG_MONGOD_SERVER: mongodb 
+  #     ME_CONFIG_MONGOD_PORT: 27017
+  #     ME_CONFIG_MONGOD_ENABLE_ADMIN: "true"
+  #     ME_CONFIG_MONGOD_AUTH_USERNAME: ${MONGO_ROOT_USERNAME} 
+  #     ME_CONFIG_MONGOD_AUTH_PASSWORD: ${MONGO_ROOT_PASSWORD} 
+  #     ME_CONFIG_BASICAUTH_USERNAME: admin 
+  #     ME_CONFIG_BASICAUTH_PASSWORD: password 
+  #   networks:
+  #     - my-network
+  #   depends_on:
+  #     mongodb:
+  #       condition: service_healthy
 
 volumes:
   mongodb_data:
