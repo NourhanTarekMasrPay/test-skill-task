@@ -2,13 +2,13 @@ import {  PolicyEnforcementMode, TokenValidation } from 'nest-keycloak-connect';
 
 export const keycloakConfig = {
   
-      realm: process.env.KEYCLOAK_REALM ||  "",
-      clientId: process.env.KEYCLOAK_CLIENT_ID ||  "",
-      clientSecret: process.env.KEYCLOAK_CLIENT_SECRET ||  "",
-      authServerUrl: process.env.KEYCLOAK_SERVER_URL ||  "",
+      realm: process.env.KEYCLOAK_REALM ||  "myrealm",
+      clientId: process.env.AUTH_KEYCLOAK_CLIENT_ID ||  "auth-microservice",
+      clientSecret: process.env.AUTH_KEYCLOAK_CLIENT_SECRET ||  "",
+      authServerUrl: process.env.KEYCLOAK_SERVER_URL ||  "http://localhost:8080",
       policyEnforcement: PolicyEnforcementMode.PERMISSIVE ||  "",
       tokenValidation: TokenValidation.ONLINE ||  "", 
-      adminUsername: process.env.KEYCLOAK_ADMIN_USERNAME || 'admin',
+      adminUsername: process.env.KEYCLOAK_ADMIN_USER || 'admin',
       adminPassword: process.env.KEYCLOAK_ADMIN_PASSWORD || 'admin',
 };
 

@@ -6,6 +6,7 @@ import { AuthModule } from './auth/auth.module';
 import { KafkaModule } from './kafka/kafka.module';
 import { JwtModule } from '@nestjs/jwt'; 
 import { keycloakConfig } from './keycloak/keycloak.config';
+import { KafkaConsumerService } from './kafka/kafka-consumer.service';
 
 @Module({
   imports: [
@@ -18,13 +19,13 @@ import { keycloakConfig } from './keycloak/keycloak.config';
     JwtModule.registerAsync({ // Use registerAsync to load secret from ConfigService
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
-        secret: configService.get<string>('AUTH_KEYCLOAK_CLIENT_SECRET') || 'fallback_secret', // Use a proper secret for internal JWTs
+        secret: process.env.AUTH_KEYCLOAK_CLIENT_SECRET , // Use a proper secret for internal JWTs
         signOptions: { expiresIn: '100h' },
       }),
       inject: [ConfigService],
     })
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService ,KafkaConsumerService],
 })
 export class AppModule {}

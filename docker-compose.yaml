@@ -75,56 +75,56 @@ services:
       start_period: 20s 
 
   # ==================================== Keycloak database ====================================
-  # keycloak-db:
-  #   image: postgres:13
-  #   container_name: keycloak-db_container
-  #   environment:
-  #     POSTGRES_DB: keycloak
-  #     POSTGRES_USER: keycloak
-  #     POSTGRES_PASSWORD: password 
-  #   volumes:
-  #     - keycloak_db_data:/var/lib/postgresql/data
-  #   networks:
-  #     - my-network
+  keycloak-db:
+    image: postgres:13
+    container_name: keycloak-db_container
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: password 
+    volumes:
+      - keycloak_db_data:/var/lib/postgresql/data
+    networks:
+      - my-network
 
   # ==================================== Keycloak service  ==========================================
-  # keycloak:
-  #   image: quay.io/keycloak/keycloak:18.0.0
-  #   container_name: keycloak
-  #   environment:
-  #     KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN_USER}
-  #     KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
-  #     KC_DB: postgres
-  #     KC_DB_URL: jdbc:postgresql://keycloak-db:5432/keycloak
-  #     KC_DB_USERNAME: keycloak
-  #     KC_DB_PASSWORD: password 
-  #   ports:
-  #     - "8080:8080"
-  #   command: ["start-dev"]
-  #   depends_on:
-  #     - keycloak-db
-  #   networks:
-  #     - my-network
+  keycloak:
+    image: quay.io/keycloak/keycloak:18.0.0
+    container_name: keycloak
+    environment:
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN_USER}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://keycloak-db:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: password 
+    ports:
+      - "8080:8080"
+    command: ["start-dev"]
+    depends_on:
+      - keycloak-db
+    networks:
+      - my-network
 
   # # ==================================== Auth Microservice ====================================
-  # auth-microservice:
-  #   build:
-  #     context: ./auth-microservice
-  #     dockerfile: Dockerfile
-  #   container_name: auth-microservice
-  #   ports:
-  #     - "${AUTH_SERVICE_PORT}:${AUTH_SERVICE_PORT}" 
-  #   env_file: 
-  #     - ./.env
-  #   volumes:
-  #     - ./auth-microservice:/usr/src/app
-  #     - /usr/src/app/node_modules
-  #   depends_on:
-  #     - kafka
-  #     - keycloak
-  #   networks:
-  #     - my-network
-  #   command: sh -c "npm install && npm run start:dev"
+  auth-microservice:
+    build:
+      context: ./auth-microservice
+      dockerfile: Dockerfile
+    container_name: auth-microservice
+    ports:
+      - "${AUTH_SERVICE_PORT}:${AUTH_SERVICE_PORT}" 
+    env_file: 
+      - ./.env
+    volumes:
+      - ./auth-microservice:/usr/src/app
+      - /usr/src/app/node_modules
+    depends_on:
+      - kafka
+      - keycloak
+    networks:
+      - my-network
+    command: sh -c "npm install && npm run start:dev"
 
   # ==================================== Order Microservice ====================================
   order-microservice:

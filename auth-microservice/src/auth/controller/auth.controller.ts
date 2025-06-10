@@ -13,6 +13,7 @@ export class AuthController {
     private readonly authService: AuthService,
     private readonly keycloakAdminService: KeycloakAdminService,
   ) {}
+  //==============================================================================================================================
 
   @Post('login')
   @ApiOperation({ summary: 'User login' })
@@ -20,6 +21,7 @@ export class AuthController {
   async login(@Body() loginDto: LoginDto) {
     return this.authService.login(loginDto);
   }
+  //==============================================================================================================================
 
   @Post('register')
   @ApiOperation({ summary: 'User registration' })
@@ -27,6 +29,7 @@ export class AuthController {
   async register(@Body() registerDto: RegisterDto) {
     return this.keycloakAdminService.createUser(registerDto);
   }
+  //==============================================================================================================================
 
   @Get('profile')
   @UseGuards(AuthGuard('keycloak'))
@@ -35,5 +38,13 @@ export class AuthController {
   async getProfile(@Request() req) {
     return this.authService.getUserInfo(req.user.accessToken);
   }
+  //==============================================================================================================================
 
+    @Get('all-users')
+  @UseGuards(AuthGuard('keycloak'))
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get all users profile' })
+  async getAllUsers() {
+    return this.keycloakAdminService.getAllUsers();
+  }
 }

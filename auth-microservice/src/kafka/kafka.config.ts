@@ -5,6 +5,5 @@ export const KAFKA_CONFIG = {
   TOPICS: {
     USER_CREATED: process.env.AUTH_KAFKA_TOPIC_USER_CREATED || 'user.created',
     USER_DELETED: process.env.AUTH_KAFKA_TOPIC_USER_DELETED || 'user.deleted',
-    USER_UPDATED: process.env.AUTH_KAFKA_TOPIC_USER_UPDATED || 'user.updated',
   },
 };
