@@ -3,13 +3,16 @@ import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import { keycloakConfig, keycloakUrls } from './keycloak.config';
 import { RegisterDto } from 'src/auth/commons/dto/register.dto';
+import { KafkaProducerService } from 'src/kafka/kafka-producer.service';
+import { KAFKA_CONFIG } from 'src/kafka/kafka.config';
 
 @Injectable()
 export class KeycloakAdminService {
   private adminToken: string;
   private tokenExpiration: number;
 
-  constructor(private readonly httpService: HttpService) {}
+  constructor(private readonly httpService: HttpService ,
+    private readonly kafkaProducerService: KafkaProducerService) {}
   //==============================================================================================================================
 
   private async getAdminToken() {
@@ -66,7 +69,7 @@ export class KeycloakAdminService {
     const { adminUrl } = keycloakUrls(keycloakConfig.realm);
 
     const payload = {
-      username: registerDto.userName, // Keycloak expects 'username', not 'userName'
+      username: registerDto.userName,
       email: registerDto.email,
       firstName: registerDto.firstName,
       lastName: registerDto.lastName,
@@ -93,6 +96,10 @@ export class KeycloakAdminService {
           },
         }),
       );
+
+    await this.kafkaProducerService.sendMessage( KAFKA_CONFIG.TOPICS.USER_CREATED , {userData : payload , access_token : token}    );
+    console.log(`user created and message sent to Kafka: `);
+
       return { success: true, message: 'User created successfully', userData: payload  , token :token};
     } catch (error) {
       console.error(`\n[KeycloakAdminService] Failed to create user. Error details:`);

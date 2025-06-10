@@ -5,6 +5,7 @@ import { AuthController } from './controller/auth.controller';
 import { HttpModule } from '@nestjs/axios';
 import { KeycloakAdminService ,KeycloakStrategy } from 'src/keycloak'
 import { KafkaModule } from 'src/kafka/kafka.module';
+import { KafkaProducerService } from 'src/kafka/kafka-producer.service';
 
 @Module({
   imports: [
@@ -12,7 +13,7 @@ import { KafkaModule } from 'src/kafka/kafka.module';
     HttpModule,
     KafkaModule
   ],
-  providers: [KeycloakStrategy, AuthService, KeycloakAdminService],
+  providers: [KeycloakStrategy, AuthService, KeycloakAdminService ,KafkaProducerService],
   controllers: [AuthController],
   exports: [AuthService],
 })

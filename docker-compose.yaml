@@ -37,6 +37,12 @@ services:
       KAFKA_DEFAULT_REPLICATION_FACTOR: ${KAFKA_DEFAULT_REPLICATION_FACTOR}
     networks:
       - my-network
+    healthcheck:
+      test: ["CMD-SHELL", "/usr/bin/kafka-broker-api-versions --bootstrap-server localhost:9092 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s 
 
   # ==================================== Kafka UI service =============================================
   # kafka-ui:
@@ -105,6 +111,12 @@ services:
       - keycloak-db
     networks:
       - my-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/realms/master/.well-known/openid-configuration || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
 
   # # ==================================== Auth Microservice ====================================
   auth-microservice:
@@ -120,12 +132,13 @@ services:
       - ./auth-microservice:/usr/src/app
       - /usr/src/app/node_modules
     depends_on:
-      - kafka
-      - keycloak
+      keycloak:
+          condition: service_healthy 
+      kafka:  
+          condition: service_healthy 
     networks:
       - my-network
     command: sh -c "npm install && npm run start:dev"
-
   # ==================================== Order Microservice ====================================
   order-microservice:
     build:

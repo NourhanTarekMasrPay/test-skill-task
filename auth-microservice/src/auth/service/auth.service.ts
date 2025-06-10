@@ -81,6 +81,9 @@ console.log("for testint log \n" , {"rea":realm, "clien":clientId, "sec":clientS
     const { realm } = keycloakConfig;
     const { userInfoUrl } = keycloakUrls(realm);
 
+    console.log('[getUserInfo] Attempting to fetch user info from:', userInfoUrl);
+    console.log('[getUserInfo] Using token (first 20 chars):', accessToken.substring(0, 20) + '...');
+
     try {
       const response = await firstValueFrom(
         this.httpService.get(userInfoUrl, {
@@ -89,13 +92,24 @@ console.log("for testint log \n" , {"rea":realm, "clien":clientId, "sec":clientS
           },
         }),
       );
+      console.log('[getUserInfo] Successfully fetched user info.');
       return response.data;
     } catch (error) {
-      console.error('Keycloak getUserInfo error:', error.response?.data);
+      console.error('Keycloak getUserInfo error details:');
+      if (error.response) {
+        console.error(`  Status: ${error.response.status}`);
+        console.error(`  Data:`, error.response.data);
+        console.error(`  Headers:`, error.response.headers);
+      } else if (error.request) {
+        console.error(`  No response received. Request details:`, error.request);
+      } else {
+        console.error(`  Error message:`, error.message);
+      }
+
       if (error.response?.status === 401) {
         throw new UnauthorizedException('Invalid or expired access token.');
       }
-      throw new InternalServerErrorException('Failed to get user info: ' + (error.response?.data?.error_description || error.message));
+      throw new InternalServerErrorException('Failed to get user info: ' + (error.response?.data?.error_description || error.message || 'Unknown error'));
     }
   }
   //==============================================================================================================================
