@@ -17,6 +17,7 @@ export class KeycloakAdminService {
 
   private async getAdminToken() {
     if (this.adminToken && Date.now() < this.tokenExpiration) {
+      console.log('[KeycloakAdminService] Using cached admin token.');
       return this.adminToken;
     }
 

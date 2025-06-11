@@ -1,9 +1,11 @@
-import { Controller, Get, Post, Delete, Body, Param, HttpStatus, HttpCode, Req } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Body, Param, HttpStatus, HttpCode, Req, UseGuards } from '@nestjs/common';
 import { OrderService } from '../service/order.service';
 import { CreateOrderDto } from '../commons/dto/create-order.dto';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiParam, ApiBearerAuth } from '@nestjs/swagger'; // Import ApiBearerAuth
 import { Order } from '../commons/sechma/order.schema';
-import { Roles, AuthenticatedUser } from 'nest-keycloak-connect'; // Import Keycloak decorators
+import { AuthGuard } from '../commons/guard/auth.guard';
+import { RolesGuard } from '../commons/guard/role.guard';
+import { Roles } from '../commons/decorator/role.decorator';
 
 @ApiTags('orders')
 @Controller('orders')
@@ -21,8 +23,10 @@ export class OrderController {
     type: Order,
   })
   @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Invalid input data.' })
-  // @ApiBearerAuth() 
-  async create(@Body() createOrderDto: CreateOrderDto, @AuthenticatedUser() user: any) {
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard) 
+  @Roles('admin')
+  async create(@Body() createOrderDto: CreateOrderDto) {
 
     return this.orderService.createOrder(createOrderDto);
   }
@@ -41,8 +45,8 @@ export class OrderController {
     type: Order,
   })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Order not found.' })
-  // @ApiBearerAuth()
-  // @Roles({ roles: ['user', 'admin'] }) 
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard) 
   async findOne(@Param('id') id: string) {
     return this.orderService.getOrderById(id);
   }
@@ -62,8 +66,9 @@ export class OrderController {
     description: 'The order has been successfully deleted.',
   })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Order not found.' })
-  // @ApiBearerAuth()
-  // @Roles({ roles: ['admin'] }) // Only users with the 'admin' role can delete
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard) 
+  @Roles('admin')
   async Delete(@Param('id') id: string) {
     return this.orderService.deleteOrder(id);
   }
@@ -76,9 +81,9 @@ export class OrderController {
     description: 'The orders details.',
     type: Order,
   })
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard) 
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Order not found.' })
-  // @ApiBearerAuth()
-  // @Roles({ roles: ['user', 'admin'] }) 
   async findAll() {
     return this.orderService.getAllOrders();
   }

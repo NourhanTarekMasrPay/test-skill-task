@@ -6,6 +6,9 @@ import { KafkaModule } from './kafka/kafka.module';
 import { KafkaConsumerService } from './kafka/kafka-consumer.service';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { APP_GUARD } from '@nestjs/core';
+import { AuthGuard } from './order/commons/guard/auth.guard';
+import { RolesGuard } from './order/commons/guard/role.guard';
 
 @Module({
   imports: [
@@ -23,11 +26,11 @@ import { AppService } from './app.service';
     KafkaModule, 
     OrderModule,
   ],
-  // providers: [
-  //   { provide: APP_GUARD, useClass: AuthGuard },
-  //   { provide: APP_GUARD, useClass: RoleGuard },
-  // ],
-  providers: [KafkaConsumerService , AppService],
+  providers: [
+    KafkaConsumerService , AppService 
+    // { provide: APP_GUARD, useClass: AuthGuard },
+    // { provide: APP_GUARD, useClass: RolesGuard },
+  ],
   controllers: [AppController], 
 })
 export class AppModule {}
